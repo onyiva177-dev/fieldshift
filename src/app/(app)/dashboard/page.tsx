@@ -79,11 +79,23 @@ export default async function DashboardPage() {
         </section>
       )}
 
+      {user.role === "officer" && (
+        <section className="card">
+          <h2 className="text-xl font-bold">Field work</h2>
+          <p className="mt-1">See your assigned farms and record soil samples.</p>
+          <Link href="/officer" className="btn-primary mt-3">Open officer dashboard</Link>
+        </section>
+      )}
+
       {user.role === "admin" && (
         <section className="card">
           <h2 className="text-xl font-bold">Administration</h2>
-          <p className="mt-1">Review officer registrations before they can submit soil data.</p>
-          <Link href="/admin" className="btn-primary mt-3">Review officers</Link>
+          <p className="mt-1">Verify officers, assign them to farms and review submitted soil samples.</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link href="/admin" className="btn-primary">Officers</Link>
+            <Link href="/admin/farms" className="btn-secondary">Assignments</Link>
+            <Link href="/admin/soil" className="btn-secondary">Soil reviews</Link>
+          </div>
         </section>
       )}
 

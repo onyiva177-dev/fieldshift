@@ -9,13 +9,14 @@ interface Props {
   pin: { lat: number; lng: number } | null;
   points: Ring; // boundary corner points as [lng, lat]
   editable?: boolean;
+  markers?: { lat: number; lng: number; label: string }[];
   onMapClick?: (lat: number, lng: number) => void;
   onPinDrag?: (lat: number, lng: number) => void;
 }
 
 const KENYA_CENTER: [number, number] = [0.0236, 37.9062];
 
-export default function FarmMap({ pin, points, editable = false, onMapClick, onPinDrag }: Props) {
+export default function FarmMap({ pin, points, editable = false, markers = [], onMapClick, onPinDrag }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const mapRef = useRef<Leaflet.Map | null>(null);
   const groupRef = useRef<Leaflet.LayerGroup | null>(null);
@@ -24,6 +25,7 @@ export default function FarmMap({ pin, points, editable = false, onMapClick, onP
   const dragRef = useRef(onPinDrag);
   const fitted = useRef(false);
   const [ready, setReady] = useState(false);
+  const markersKey = JSON.stringify(markers);
 
   clickRef.current = onMapClick;
   dragRef.current = onPinDrag;
@@ -73,6 +75,11 @@ export default function FarmMap({ pin, points, editable = false, onMapClick, onP
         L.circleMarker(ll, { radius: 6, color: "#7a5504", fillColor: "#e0ac2b", fillOpacity: 1, weight: 2 }).addTo(group)
       );
     }
+    markers.forEach((m) =>
+      L.circleMarker([m.lat, m.lng], { radius: 7, color: "#ffffff", weight: 2, fillColor: "#1d4ed8", fillOpacity: 1 })
+        .bindTooltip(m.label, { permanent: false })
+        .addTo(group)
+    );
     if (pin) {
       const icon = L.divIcon({
         className: "",
@@ -100,7 +107,8 @@ export default function FarmMap({ pin, points, editable = false, onMapClick, onP
     } else if (pin && !map.getBounds().contains([pin.lat, pin.lng])) {
       map.setView([pin.lat, pin.lng], Math.max(map.getZoom(), 15));
     }
-  }, [ready, points, pin, editable]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ready, points, pin, editable, markersKey]);
 
   return (
     <div

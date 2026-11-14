@@ -24,8 +24,15 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               {user.role === "farmer" && (
                 <Link href="/farms" className="underline-offset-4 hover:underline">My farms</Link>
               )}
+              {user.role === "officer" && (
+                <Link href="/officer" className="underline-offset-4 hover:underline">My farms</Link>
+              )}
               {user.role === "admin" && (
-                <Link href="/admin" className="underline-offset-4 hover:underline">Administration</Link>
+                <>
+                  <Link href="/admin" className="underline-offset-4 hover:underline">Officers</Link>
+                  <Link href="/admin/farms" className="underline-offset-4 hover:underline">Assignments</Link>
+                  <Link href="/admin/soil" className="underline-offset-4 hover:underline">Soil reviews</Link>
+                </>
               )}
             </nav>
           </div>

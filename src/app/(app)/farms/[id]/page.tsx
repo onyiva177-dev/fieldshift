@@ -12,6 +12,7 @@ import {
   WATER_SOURCES,
   labelOf,
 } from "@/lib/farm-options";
+import StatusBadge from "@/components/StatusBadge";
 import { addCropRecord, deleteCropRecord, markHarvested } from "../actions";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -71,12 +72,14 @@ export default async function FarmProfilePage({
   const user = await requireUser();
 
   const supabase = await createClient();
-  const [farmRes, boundaryRes, prioRes, cropRes] = await Promise.all([
+  const [farmRes, boundaryRes, prioRes, cropRes, soilRes] = await Promise.all([
     supabase.from("farms").select("*").eq("id", id).maybeSingle(),
     supabase.from("farm_boundaries").select("geojson, area_ha, source").eq("farm_id", id).maybeSingle(),
     supabase.from("farmer_priorities").select("priority").eq("farm_id", id),
     supabase.from("crop_history").select("id, crop_name, status, planted_on, harvested_on").eq("farm_id", id).order("planted_on", { ascending: false, nullsFirst: false }),
+    supabase.from("soil_samples").select("id, sampled_on, verification_status").eq("farm_id", id).order("sampled_on", { ascending: false }).limit(20),
   ]);
+  const soilTests = (soilRes.data ?? []) as { id: string; sampled_on: string; verification_status: string }[];
   const f = farmRes.data;
   if (!f) notFound();
 
@@ -128,6 +131,23 @@ export default async function FarmProfilePage({
           </div>
           {f.notes && <div className="sm:col-span-2"><dt className="text-sm font-semibold">Notes</dt><dd>{f.notes}</dd></div>}
         </dl>
+      </section>
+
+      <section className="card space-y-3">
+        <h2 className="text-xl font-bold">Soil tests</h2>
+        <p className="text-sm">Soil tests are recorded by agricultural officers. Only verified tests are used for recommendations.</p>
+        {soilTests.length === 0 ? (
+          <p>No soil tests recorded for this farm yet.</p>
+        ) : (
+          <ul className="space-y-2">
+            {soilTests.map((t) => (
+              <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-field-200 p-3">
+                <Link href={`/soil/${t.id}`} className="font-semibold underline">Sampled {fmt(t.sampled_on)}</Link>
+                <StatusBadge status={t.verification_status} />
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section id="crops" className="card space-y-5">
