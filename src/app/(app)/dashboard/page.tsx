@@ -38,6 +38,18 @@ export default async function DashboardPage() {
     officer = data as unknown as OfficerRow | null;
   }
 
+  let farms: { id: string; name: string; county: string }[] = [];
+  if (user.role === "farmer") {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("farms")
+      .select("id, name, county")
+      .eq("owner_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(5);
+    farms = (data ?? []) as typeof farms;
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -78,7 +90,21 @@ export default async function DashboardPage() {
       {user.role === "farmer" && (
         <section className="card">
           <h2 className="text-xl font-bold">Your farms</h2>
-          <p className="mt-1">No farms registered yet. Farm registration with map pinning is the next module being added.</p>
+          {farms.length === 0 ? (
+            <p className="mt-1">No farms registered yet. Register your first farm to get started.</p>
+          ) : (
+            <ul className="mt-2 space-y-1">
+              {farms.map((f) => (
+                <li key={f.id}>
+                  <Link href={`/farms/${f.id}`} className="font-semibold text-field-800 underline">{f.name}</Link>, {f.county}
+                </li>
+              ))}
+            </ul>
+          )}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link href="/farms/new" className="btn-primary">Register a farm</Link>
+            {farms.length > 0 && <Link href="/farms" className="btn-secondary">All farms</Link>}
+          </div>
         </section>
       )}
     </div>

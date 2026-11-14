@@ -21,6 +21,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <Link href="/dashboard" className="text-xl font-extrabold text-field-800">Field Shift</Link>
             <nav className="flex gap-3 font-semibold">
               <Link href="/dashboard" className="underline-offset-4 hover:underline">Dashboard</Link>
+              {user.role === "farmer" && (
+                <Link href="/farms" className="underline-offset-4 hover:underline">My farms</Link>
+              )}
               {user.role === "admin" && (
                 <Link href="/admin" className="underline-offset-4 hover:underline">Administration</Link>
               )}
