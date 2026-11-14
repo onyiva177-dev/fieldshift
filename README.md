@@ -7,10 +7,13 @@ Stack: Next.js 15 (TypeScript), Tailwind CSS, Supabase (Postgres, PostGIS, Auth)
 
 ## Status
 
-Phase 1 (foundation) is complete: landing page, registration, login, roles (farmer, officer, admin),
-officer verification by an administrator, audit log, Row Level Security.
+Phase 1 (foundation): landing page, registration, login, roles (farmer, officer, admin), officer verification,
+audit log, Row Level Security.
 
-Not built yet: farms and maps, soil submission, NASA data integration, crop engine, planner, full dashboards.
+Phase 2 (farms): farm registration with map pin, GPS and boundary drawing or GeoJSON upload, farm profiles,
+farmer priorities, crop history. Run `supabase/migrations/0002_farms.sql` after 0001.
+
+Not built yet: soil submission, NASA data integration, crop engine, planner, full dashboards.
 No NASA or soil data is shown anywhere until those phases are connected to real sources.
 
 ## Setup
@@ -18,7 +21,7 @@ No NASA or soil data is shown anywhere until those phases are connected to real 
 1. Install Node 20.12 or newer, then run `npm install`.
 2. Create a Supabase project. In Project Settings > API, copy the Project URL and the anon public key.
 3. Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-4. In the Supabase SQL Editor, paste and run `supabase/migrations/0001_foundation.sql`.
+4. In the Supabase SQL Editor, run `supabase/migrations/0001_foundation.sql`, then `0002_farms.sql`.
 5. In Authentication > URL Configuration, set Site URL to `http://localhost:3000` and add
    `http://localhost:3000/auth/callback` to Redirect URLs. Add your Vercel URL the same way after deploying.
 6. For quick local testing you may turn off Authentication > Providers > Email > Confirm email.
