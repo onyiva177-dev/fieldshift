@@ -1,4 +1,5 @@
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { requireRoleAction, requireRolePage } from "@/lib/policy";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
@@ -12,7 +13,9 @@ async function decide(formData: FormData) {
 
   const id = String(formData.get("id") ?? "");
   const decision = String(formData.get("decision") ?? "");
-  if (!UUID.test(id) || (decision !== "verified" && decision !== "rejected")) return;
+  if (!UUID.test(id) || (decision !== "verified" && decision !== "rejected")) {
+    redirect(`/admin?error=${encodeURIComponent(`Invalid request (id="${id}", decision="${decision}").`)}`);
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -21,10 +24,19 @@ async function decide(formData: FormData) {
     .eq("id", id)
     .select("id");
 
-  if (!error && data?.length) {
-    await logAudit({ actorId: admin.id, action: `officer.${decision}`, entity: "officer", entityId: id });
+  // Never fail silently: show the real reason on the page and in the server logs.
+  if (error) {
+    console.error("[officer decision] update failed:", error.code, error.message);
+    redirect(`/admin?error=${encodeURIComponent(`Database error${error.code ? ` (${error.code})` : ""}: ${error.message}`)}`);
   }
+  if (!data?.length) {
+    console.error("[officer decision] update matched 0 rows for", id, "- blocked by Row Level Security or the row no longer exists");
+    redirect(`/admin?error=${encodeURIComponent("Nothing was updated. The database blocked the change (admin role or policy problem) or the officer no longer exists.")}`);
+  }
+
+  await logAudit({ actorId: admin.id, action: `officer.${decision}`, entity: "officer", entityId: id });
   revalidatePath("/admin");
+  redirect(`/admin?done=${decision}`);
 }
 
 type PendingRow = {
@@ -38,8 +50,13 @@ type PendingRow = {
   organizations: { name: string } | null;
 };
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; done?: string }>;
+}) {
   await requireRolePage(["admin"]);
+  const { error: actionError, done } = await searchParams;
   const supabase = await createClient();
 
   const { data } = await supabase
@@ -58,6 +75,14 @@ export default async function AdminPage() {
   return (
     <div className="space-y-6">
       <h1 className="text-3xl font-bold">Officer verification</h1>
+      {actionError && (
+        <p role="alert" className="rounded border border-red-300 bg-red-50 p-3 font-semibold text-red-900">{actionError}</p>
+      )}
+      {done && (
+        <p role="status" className="rounded border border-green-300 bg-green-50 p-3 font-semibold text-green-900">
+          Officer {done === "verified" ? "verified" : "rejected"}.
+        </p>
+      )}
       <p>{pending.length} waiting for review. {reviewed ?? 0} already reviewed.</p>
 
       {pending.length === 0 ? (
