@@ -21,7 +21,14 @@ SMAP soil moisture and MODIS NDVI/EVI (via NASA AppEEARS). Monthly values are ca
 unit, retrieval date and a label saying whether they are satellite-observed, a satellite estimate or model-derived.
 Run `supabase/migrations/0004_nasa.sql`.
 
-Not built yet: crop engine, planner, full dashboards.
+Phase 5 (crop intelligence): crop knowledge base with per-region requirements, rotation rules, an administrator
+interface for crops, rules and scoring weights, and a transparent rule-based recommendation engine. Each crop is scored
+on soil, climate, water, nutrients, rotation and farmer priorities, with the breakdown, risks, data sources and a
+confidence level shown. An optional AI service only rewrites the engine's results in plain language, and its output is
+rejected if it contains numbers the engine did not produce. Run `supabase/migrations/0005_crops.sql`.
+The seeded crop values are DRAFT indicative ranges: have an agronomist review them under Administration, Crops.
+
+Not built yet: multi-season planner, full dashboards.
 No NASA or soil data is shown anywhere until those phases are connected to real sources.
 
 ## Setup
@@ -29,7 +36,7 @@ No NASA or soil data is shown anywhere until those phases are connected to real 
 1. Install Node 20.12 or newer, then run `npm install`.
 2. Create a Supabase project. In Project Settings > API, copy the Project URL and the anon public key.
 3. Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-4. In the Supabase SQL Editor, run `0001_foundation.sql`, `0002_farms.sql`, `0003_soil.sql`, then `0004_nasa.sql` (in `supabase/migrations/`).
+4. In the Supabase SQL Editor, run `0001_foundation.sql`, `0002_farms.sql`, `0003_soil.sql`, then `0004_nasa.sql`, then `0005_crops.sql` (in `supabase/migrations/`).
 5. In Authentication > URL Configuration, set Site URL to `http://localhost:3000` and add
    `http://localhost:3000/auth/callback` to Redirect URLs. Add your Vercel URL the same way after deploying.
 6. For quick local testing you may turn off Authentication > Providers > Email > Confirm email.
