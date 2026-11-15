@@ -16,7 +16,12 @@ farmer priorities, crop history. Run `supabase/migrations/0002_farms.sql` after 
 Phase 3 (soil): officer assignment by admins, sampling points, soil sample submission with measurements and
 lab report or photo uploads, admin verification workflow, append-only history. Run `supabase/migrations/0003_soil.sql`.
 
-Not built yet: NASA data integration, crop engine, planner, full dashboards.
+Phase 4 (NASA): server-side integration with NASA POWER (weather, modelled soil wetness), GPM IMERG rainfall (via POWER),
+SMAP soil moisture and MODIS NDVI/EVI (via NASA AppEEARS). Monthly values are cached per farm with source, resolution,
+unit, retrieval date and a label saying whether they are satellite-observed, a satellite estimate or model-derived.
+Run `supabase/migrations/0004_nasa.sql`.
+
+Not built yet: crop engine, planner, full dashboards.
 No NASA or soil data is shown anywhere until those phases are connected to real sources.
 
 ## Setup
@@ -24,7 +29,7 @@ No NASA or soil data is shown anywhere until those phases are connected to real 
 1. Install Node 20.12 or newer, then run `npm install`.
 2. Create a Supabase project. In Project Settings > API, copy the Project URL and the anon public key.
 3. Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-4. In the Supabase SQL Editor, run `0001_foundation.sql`, `0002_farms.sql`, then `0003_soil.sql` (in `supabase/migrations/`).
+4. In the Supabase SQL Editor, run `0001_foundation.sql`, `0002_farms.sql`, `0003_soil.sql`, then `0004_nasa.sql` (in `supabase/migrations/`).
 5. In Authentication > URL Configuration, set Site URL to `http://localhost:3000` and add
    `http://localhost:3000/auth/callback` to Redirect URLs. Add your Vercel URL the same way after deploying.
 6. For quick local testing you may turn off Authentication > Providers > Email > Confirm email.
@@ -56,3 +61,17 @@ No NASA or soil data is shown anywhere until those phases are connected to real 
 1. Import the GitHub repository in Vercel.
 2. Add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 3. After the first deploy, add the Vercel URL to Supabase Site URL and Redirect URLs (`/auth/callback`).
+
+## NASA data setup
+
+| Item | Needed for | Where |
+|---|---|---|
+| `SUPABASE_SERVICE_ROLE_KEY` | Saving any NASA data | Supabase > Project Settings > API |
+| `CRON_SECRET` | The daily job at `/api/cron/nasa-sync` (see `vercel.json`) | Any long random string |
+| `EARTHDATA_USERNAME`, `EARTHDATA_PASSWORD` | SMAP and MODIS only | Free account at urs.earthdata.nasa.gov |
+
+- NASA POWER and IMERG need no account. SMAP and MODIS go through NASA AppEEARS and are asynchronous: the first sync
+  submits a request, and a later sync (daily, or the Refresh button) collects the result.
+- The first fetch for a new farm starts in the background when the farm is saved. Pages only read cached values.
+- Administrators can see configuration status and recent sync runs under Data sync.
+- Satellite and model values are never mixed with officer-verified soil tests.
