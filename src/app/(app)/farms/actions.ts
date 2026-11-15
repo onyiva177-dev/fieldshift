@@ -1,10 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { requireRoleAction } from "@/lib/policy";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
+import { hasServiceRole } from "@/lib/supabase/admin";
+import { syncFarm } from "@/lib/nasa/sync";
 import { cropRecordSchema, farmSchema } from "@/lib/farm-validation";
 
 export type FormResult = { error?: string };
@@ -84,6 +87,16 @@ async function saveFarm(farmId: string | null, fd: FormData): Promise<FormResult
 
   const id = String(data);
   await logAudit({ actorId: user.id, action: farmId ? "farm.updated" : "farm.created", entity: "farm", entityId: id });
+  if (!farmId && hasServiceRole()) {
+    // first NASA fetch runs after the response is sent, so registering a farm stays instant
+    after(async () => {
+      try {
+        await syncFarm(id, "farm_created");
+      } catch (err) {
+        console.error("[farm_created] NASA sync failed", id, err);
+      }
+    });
+  }
   revalidatePath("/farms");
   revalidatePath(`/farms/${id}`);
   redirect(`/farms/${id}`);

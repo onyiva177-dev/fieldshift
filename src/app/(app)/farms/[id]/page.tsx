@@ -14,6 +14,7 @@ import {
 } from "@/lib/farm-options";
 import StatusBadge from "@/components/StatusBadge";
 import { addCropRecord, deleteCropRecord, markHarvested } from "../actions";
+import SubmitButton from "@/components/SubmitButton";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -41,13 +42,13 @@ function CropList({ title, rows, farmId, canEdit }: { title: string; rows: CropR
                     <form action={markHarvested}>
                       <input type="hidden" name="id" value={c.id} />
                       <input type="hidden" name="farmId" value={farmId} />
-                      <button className="btn-secondary min-h-10 px-3 py-1 text-sm">Mark as harvested</button>
+                      <SubmitButton className="btn-secondary min-h-10 px-3 py-1 text-sm" pendingText="Saving...">Mark as harvested</SubmitButton>
                     </form>
                   )}
                   <form action={deleteCropRecord}>
                     <input type="hidden" name="id" value={c.id} />
                     <input type="hidden" name="farmId" value={farmId} />
-                    <button className="btn-secondary min-h-10 px-3 py-1 text-sm">Delete record</button>
+                    <SubmitButton className="btn-secondary min-h-10 px-3 py-1 text-sm" pendingText="Deleting...">Delete record</SubmitButton>
                   </form>
                 </div>
               )}
@@ -98,7 +99,10 @@ export default async function FarmProfilePage({
           <h1 className="text-3xl font-bold">{f.name}</h1>
           <p>{place}</p>
         </div>
-        {canEdit && <Link href={`/farms/${id}/edit`} className="btn-secondary">Edit farm</Link>}
+        <div className="flex flex-wrap gap-2">
+          <Link href={`/farms/${id}/environment`} className="btn-secondary">NASA climate data</Link>
+          {canEdit && <Link href={`/farms/${id}/edit`} className="btn-secondary">Edit farm</Link>}
+        </div>
       </div>
 
       <FarmMap pin={{ lat: f.lat, lng: f.lng }} points={points} />
@@ -182,7 +186,7 @@ export default async function FarmProfilePage({
               </div>
             </div>
             {cropError && <p role="alert" className="rounded-md border border-red-700 bg-red-50 p-3 text-red-900">{cropError}</p>}
-            <button type="submit" className="btn-primary">Add record</button>
+            <SubmitButton pendingText="Adding...">Add record</SubmitButton>
           </form>
         )}
       </section>

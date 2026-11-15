@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/policy";
 import { createClient } from "@/lib/supabase/server";
+import SubmitButton from "@/components/SubmitButton";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
@@ -21,6 +22,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <Link href="/dashboard" className="text-xl font-extrabold text-field-800">Field Shift</Link>
             <nav className="flex gap-3 font-semibold">
               <Link href="/dashboard" className="underline-offset-4 hover:underline">Dashboard</Link>
+              <Link href="/nasa" className="underline-offset-4 hover:underline">NASA data</Link>
               {user.role === "farmer" && (
                 <Link href="/farms" className="underline-offset-4 hover:underline">My farms</Link>
               )}
@@ -32,13 +34,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                   <Link href="/admin" className="underline-offset-4 hover:underline">Officers</Link>
                   <Link href="/admin/farms" className="underline-offset-4 hover:underline">Assignments</Link>
                   <Link href="/admin/soil" className="underline-offset-4 hover:underline">Soil reviews</Link>
+                  <Link href="/admin/data" className="underline-offset-4 hover:underline">Data sync</Link>
                 </>
               )}
             </nav>
           </div>
           <form action={logout} className="flex items-center gap-3">
             <span className="hidden text-sm sm:inline">{user.name}</span>
-            <button type="submit" className="btn-secondary min-h-10 px-3 py-1 text-sm">Log out</button>
+            <SubmitButton className="btn-secondary min-h-10 px-3 py-1 text-sm" pendingText="Signing out...">Log out</SubmitButton>
           </form>
         </div>
       </header>

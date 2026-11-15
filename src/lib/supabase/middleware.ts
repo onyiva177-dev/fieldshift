@@ -4,6 +4,13 @@ import { NextResponse, type NextRequest } from "next/server";
 const PROTECTED = ["/dashboard", "/admin", "/officer", "/farms", "/soil", "/nasa", "/crops", "/planner"];
 
 export async function updateSession(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  const isProtected = PROTECTED.some((p) => path === p || path.startsWith(p + "/"));
+  const isAuthPage = path === "/login" || path === "/register";
+
+  // Public pages need no session work at all
+  if (!isProtected && !isAuthPage) return NextResponse.next({ request });
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -21,14 +28,9 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  // getUser() validates the token with Supabase; do not replace it with getSession().
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  const path = request.nextUrl.pathname;
-  const isProtected = PROTECTED.some((p) => path === p || path.startsWith(p + "/"));
-  const isAuthPage = path === "/login" || path === "/register";
+  // Verifies the token (locally when possible) and refreshes it if it expired.
+  const { data } = await supabase.auth.getClaims();
+  const signedIn = !!data?.claims?.sub;
 
   const redirectTo = (to: string) => {
     const res = NextResponse.redirect(new URL(to, request.url));
@@ -36,7 +38,7 @@ export async function updateSession(request: NextRequest) {
     return res;
   };
 
-  if (!user && isProtected) return redirectTo("/login");
-  if (user && isAuthPage) return redirectTo("/dashboard");
+  if (!signedIn && isProtected) return redirectTo("/login");
+  if (signedIn && isAuthPage) return redirectTo("/dashboard");
   return response;
 }

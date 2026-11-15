@@ -10,15 +10,14 @@ const rotation = [
 const nasa = [
   { name: "NASA POWER", text: "Daily temperature, rainfall, humidity and sunlight for your farm location, going back decades." },
   { name: "SMAP", text: "Satellite soil moisture trends. Coarse resolution, so we show it as a regional signal, not a field reading." },
-  { name: "GPM IMERG", text: "Satellite rainfall estimates that show dry and wet spells through the season." },
+  { name: "GPM IMERG", text: "Satellite rainfall estimates (about 10 km) that show dry and wet spells through the season." },
   { name: "MODIS", text: "Vegetation greenness (NDVI and EVI) to see how crops and land cover change over time." },
 ];
 
 export default async function Home() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
+  const user = data?.claims?.sub ? data.claims : null;
   return (
     <>
       <header className="border-b border-field-200 bg-white">

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loginSchema } from "@/lib/validation";
+import SubmitButton from "@/components/SubmitButton";
 
 async function login(formData: FormData) {
   "use server";
@@ -49,7 +50,7 @@ export default async function LoginPage({
           <label htmlFor="password" className="label">Password</label>
           <input id="password" name="password" type="password" autoComplete="current-password" required className="input" />
         </div>
-        <button type="submit" className="btn-primary w-full">Log in</button>
+        <SubmitButton className="btn-primary w-full" pendingText="Signing in...">Log in</SubmitButton>
       </form>
       <p className="mt-4">
         New here? <Link href="/register" className="font-semibold text-field-800 underline">Create an account</Link>

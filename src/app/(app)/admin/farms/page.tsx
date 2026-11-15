@@ -2,6 +2,7 @@ import Link from "next/link";
 import { requireRolePage } from "@/lib/policy";
 import { createClient } from "@/lib/supabase/server";
 import { assignOfficer, unassignOfficer } from "../actions";
+import SubmitButton from "@/components/SubmitButton";
 
 export default async function AdminFarmsPage() {
   await requireRolePage(["admin"]);
@@ -48,7 +49,7 @@ export default async function AdminFarmsPage() {
                           <span>{name.get(a.officer_user_id) ?? "Officer"}</span>
                           <form action={unassignOfficer}>
                             <input type="hidden" name="id" value={a.id} />
-                            <button className="btn-secondary min-h-10 px-3 py-1 text-sm">Remove</button>
+                            <SubmitButton className="btn-secondary min-h-10 px-3 py-1 text-sm" pendingText="Removing...">Remove</SubmitButton>
                           </form>
                         </li>
                       ))}
@@ -65,7 +66,7 @@ export default async function AdminFarmsPage() {
                         {free.map((o) => <option key={o.user_id} value={o.user_id}>{name.get(o.user_id) ?? "Officer"} ({o.county})</option>)}
                       </select>
                     </div>
-                    <button className="btn-primary">Assign</button>
+                    <SubmitButton pendingText="Assigning...">Assign</SubmitButton>
                   </form>
                 )}
               </li>

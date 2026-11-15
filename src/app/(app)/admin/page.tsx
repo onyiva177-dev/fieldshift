@@ -2,6 +2,7 @@ import { revalidatePath } from "next/cache";
 import { requireRoleAction, requireRolePage } from "@/lib/policy";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
+import SubmitButton from "@/components/SubmitButton";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -71,8 +72,8 @@ export default async function AdminPage() {
               <p className="text-sm">Registered {new Date(o.created_at).toLocaleDateString("en-GB")}</p>
               <form action={decide} className="mt-3 flex gap-2">
                 <input type="hidden" name="id" value={o.id} />
-                <button name="decision" value="verified" className="btn-primary">Verify officer</button>
-                <button name="decision" value="rejected" className="btn-secondary">Reject</button>
+                <SubmitButton name="decision" value="verified" pendingText="Verifying...">Verify officer</SubmitButton>
+                <SubmitButton name="decision" value="rejected" className="btn-secondary" pendingText="Rejecting...">Reject</SubmitButton>
               </form>
             </li>
           ))}

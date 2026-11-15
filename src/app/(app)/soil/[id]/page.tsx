@@ -6,6 +6,7 @@ import StatusBadge from "@/components/StatusBadge";
 import AttachmentUploader from "@/components/AttachmentUploader";
 import { categoryLabel, parameterLabel, paramByKey, sourceLabel } from "@/lib/soil-parameters";
 import { reviewSample } from "../../admin/actions";
+import SubmitButton from "@/components/SubmitButton";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const fmt = (d: string | null) => (d ? new Date(d).toLocaleDateString("en-GB") : "not recorded");
@@ -168,7 +169,7 @@ export default async function SoilSamplePage({
             <textarea id="note" name="note" rows={3} maxLength={1000} className="input" />
           </div>
           {sp.reviewError && <p role="alert" className="rounded-md border border-red-700 bg-red-50 p-3 text-red-900">{sp.reviewError}</p>}
-          <button type="submit" className="btn-primary">Save decision</button>
+          <SubmitButton pendingText="Saving...">Save decision</SubmitButton>
         </form>
       )}
     </div>
