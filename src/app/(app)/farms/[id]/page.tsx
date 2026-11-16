@@ -101,6 +101,7 @@ export default async function FarmProfilePage({
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={`/farms/${id}/recommendations`} className="btn-primary">Crop recommendations</Link>
+          <Link href={`/farms/${id}/planner`} className="btn-secondary">Rotation planner</Link>
           <Link href={`/farms/${id}/environment`} className="btn-secondary">NASA climate data</Link>
           {canEdit && <Link href={`/farms/${id}/edit`} className="btn-secondary">Edit farm</Link>}
         </div>

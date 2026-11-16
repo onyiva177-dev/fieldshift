@@ -103,3 +103,41 @@ export async function registerSoilAttachments(sampleId: string, items: Attachmen
   revalidatePath(`/soil/${sampleId}`);
   return {};
 }
+
+// Field visits -----------------------------------------------------------
+
+export async function addFieldVisit(fd: FormData): Promise<void> {
+  const user = await requireRoleAction(["officer"]);
+  const farmId = String(fd.get("farmId") ?? "");
+  const date = String(fd.get("visitDate") ?? "");
+  const purpose = String(fd.get("purpose") ?? "").trim();
+  const notes = String(fd.get("notes") ?? "").trim();
+  const fail = (m: string) => redirect(`/officer?visitError=${encodeURIComponent(m)}#visits`);
+
+  if (!UUID.test(farmId)) return fail("Choose a farm.");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date))) return fail("Choose a valid visit date.");
+  const days = (Date.parse(date) - Date.now()) / 86400000;
+  if (days > 366 || days < -366) return fail("The visit date must be within a year of today.");
+  if (purpose.length < 3 || purpose.length > 200) return fail("Describe the purpose of the visit (3 to 200 characters).");
+  if (notes.length > 1000) return fail("Notes are too long (1000 characters at most).");
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("field_visits")
+    .insert({ farm_id: farmId, officer_user_id: user.id, visit_date: date, purpose, notes: notes || null }).select("id").single();
+  if (error || !data) return fail("Could not save the visit. You may not be assigned to that farm.");
+
+  await logAudit({ actorId: user.id, action: "field_visit.created", entity: "field_visit", entityId: data.id });
+  revalidatePath("/officer");
+  redirect("/officer#visits");
+}
+
+export async function setVisitStatus(fd: FormData): Promise<void> {
+  const user = await requireRoleAction(["officer"]);
+  const id = String(fd.get("id") ?? "");
+  const status = String(fd.get("status") ?? "");
+  if (!UUID.test(id) || !["completed", "cancelled"].includes(status)) return;
+  const supabase = await createClient();
+  const { data } = await supabase.from("field_visits").update({ status }).eq("id", id).eq("status", "planned").select("id");
+  if (data?.length) await logAudit({ actorId: user.id, action: `field_visit.${status}`, entity: "field_visit", entityId: id });
+  revalidatePath("/officer");
+}

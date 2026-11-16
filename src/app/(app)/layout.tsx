@@ -23,6 +23,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <nav className="flex gap-3 font-semibold">
               <Link href="/dashboard" className="underline-offset-4 hover:underline">Dashboard</Link>
               <Link href="/nasa" className="underline-offset-4 hover:underline">NASA data</Link>
+              <Link href="/notifications" className="underline-offset-4 hover:underline">Notifications</Link>
               {user.role === "farmer" && (
                 <Link href="/farms" className="underline-offset-4 hover:underline">My farms</Link>
               )}
@@ -31,6 +32,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               )}
               {user.role === "admin" && (
                 <>
+                  <Link href="/admin/users" className="underline-offset-4 hover:underline">Users</Link>
                   <Link href="/admin" className="underline-offset-4 hover:underline">Officers</Link>
                   <Link href="/admin/farms" className="underline-offset-4 hover:underline">Assignments</Link>
                   <Link href="/admin/soil" className="underline-offset-4 hover:underline">Soil reviews</Link>

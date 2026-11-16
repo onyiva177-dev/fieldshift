@@ -11,7 +11,7 @@ export interface EngineContext {
   soil: SoilMeasurementIn[]; previousCrops: PreviousCropIn[]; climate: ClimateIn; suggestedMonth: number;
 }
 
-async function series(supabase: SupabaseClient, farmId: string, variable: string) {
+export async function series(supabase: SupabaseClient, farmId: string, variable: string) {
   const { data } = await supabase.from("nasa_observations").select("period_start, value").eq("farm_id", farmId).eq("variable", variable).order("period_start").limit(1000);
   return toMap((data ?? []) as { period_start: string; value: number }[]);
 }
@@ -103,3 +103,17 @@ export async function loadEngineContext(supabase: SupabaseClient, farmId: string
 }
 
 export { monthKey };
+
+/** Verified soil measurements for a farm (latest 60 verified samples). Unverified results are never returned. */
+export async function loadVerifiedSoil(supabase: SupabaseClient, farmId: string): Promise<SoilMeasurementIn[]> {
+  const { data: samples } = await supabase.from("soil_samples").select("id, sampling_point_id, sampled_on")
+    .eq("farm_id", farmId).eq("verification_status", "verified").order("sampled_on", { ascending: false }).limit(60);
+  if (!samples?.length) return [];
+  const { data: ms } = await supabase.from("soil_measurements").select("sample_id, parameter, value_num, value_text, unit, method").in("sample_id", samples.map((x: { id: string }) => x.id));
+  const sMap = new Map((samples as { id: string; sampling_point_id: string; sampled_on: string }[]).map((x) => [x.id, x]));
+  return ((ms ?? []) as any[]).map((m) => {
+    const sm = sMap.get(m.sample_id)!;
+    return { sampleId: m.sample_id, pointId: sm.sampling_point_id, pointLabel: "", sampledOn: sm.sampled_on, parameter: m.parameter,
+      valueNum: m.value_num === null ? null : Number(m.value_num), valueText: m.value_text, unit: m.unit, method: m.method };
+  });
+}

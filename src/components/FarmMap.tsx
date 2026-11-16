@@ -103,6 +103,12 @@ export default function FarmMap({ pin, points, editable = false, markers = [], o
       } else if (pin) {
         map.setView([pin.lat, pin.lng], 15);
         fitted.current = true;
+      } else if (markers.length === 1) {
+        map.setView([markers[0].lat, markers[0].lng], 12);
+        fitted.current = true;
+      } else if (markers.length > 1) {
+        map.fitBounds(L.latLngBounds(markers.map((m) => [m.lat, m.lng] as [number, number])), { padding: [32, 32], maxZoom: 12 });
+        fitted.current = true;
       }
     } else if (pin && !map.getBounds().contains([pin.lat, pin.lng])) {
       map.setView([pin.lat, pin.lng], Math.max(map.getZoom(), 15));

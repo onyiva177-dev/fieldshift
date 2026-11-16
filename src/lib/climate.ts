@@ -66,3 +66,19 @@ export function sum(vals: (number | undefined)[], minCount: number): number | nu
 
 export const round = (v: number | null | undefined, d = 1) =>
   typeof v === "number" ? Math.round(v * 10 ** d) / 10 ** d : null;
+
+/** Rainfall over the last n months as a percentage of the normal for those same calendar months. Null if any month is missing. */
+export function recentPct(map: Map<string, number>, nrm: Map<number, number>, endKey: string | null, n = 3): number | null {
+  if (!endKey) return null;
+  const keys = lastNKeys(endKey, n);
+  let actual = 0;
+  let normal = 0;
+  for (const k of keys) {
+    const v = map.get(k);
+    const nv = normalFor(nrm, k);
+    if (v === undefined || nv === undefined) return null;
+    actual += v;
+    normal += nv;
+  }
+  return normal > 0 ? (actual / normal) * 100 : null;
+}

@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireRoleAction } from "@/lib/policy";
 import { createClient } from "@/lib/supabase/server";
 import { logAudit } from "@/lib/audit";
+import { notify } from "@/lib/notify";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -22,6 +23,9 @@ export async function assignOfficer(fd: FormData): Promise<void> {
     .single();
   if (!error && data) {
     await logAudit({ actorId: admin.id, action: "assignment.created", entity: "farm", entityId: farmId, details: { officerId } });
+    const { data: farm } = await supabase.from("farms").select("name, owner_id").eq("id", farmId).maybeSingle();
+    await notify([officerId], "You were assigned to a farm", farm ? `You can now record soil samples for ${farm.name}.` : null, `/officer/farms/${farmId}`);
+    await notify([farm?.owner_id], "An officer was assigned to your farm", farm ? `An agricultural officer can now take soil samples on ${farm.name}.` : null, `/farms/${farmId}`);
   }
   revalidatePath("/admin/farms");
 }
@@ -57,6 +61,13 @@ export async function reviewSample(fd: FormData): Promise<void> {
   }
 
   await logAudit({ actorId: admin.id, action: `soil_sample.${decision}`, entity: "soil_sample", entityId: id });
+  const { data: smp } = await supabase.from("soil_samples").select("submitted_by, farm_id").eq("id", id).maybeSingle();
+  if (smp) {
+    const { data: farm } = await supabase.from("farms").select("name, owner_id").eq("id", smp.farm_id).maybeSingle();
+    const label = decision === "verified" ? "verified" : decision === "rejected" ? "rejected" : "sent back for correction";
+    await notify([smp.submitted_by], `Your soil sample was ${label}`, note || null, `/soil/${id}`);
+    if (decision === "verified") await notify([farm?.owner_id], "A soil test for your farm was verified", farm ? `Verified results for ${farm.name} will now be used in crop recommendations.` : null, `/soil/${id}`);
+  }
   revalidatePath("/admin/soil");
   revalidatePath(`/soil/${id}`);
   redirect("/admin/soil");
