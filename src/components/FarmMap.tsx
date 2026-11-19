@@ -87,7 +87,10 @@ export default function FarmMap({ pin, points, editable = false, markers = [], o
         iconSize: [22, 22],
         iconAnchor: [11, 22],
       });
-      const marker = L.marker([pin.lat, pin.lng], { icon, draggable: editable }).addTo(group);
+      const marker = L.marker([pin.lat, pin.lng], {
+        icon, draggable: editable, keyboard: editable,
+        title: editable ? "Pin. Drag to move it." : "Farm pin", alt: "Pin",
+      }).addTo(group);
       if (editable) {
         marker.on("dragend", () => {
           const p = marker.getLatLng();

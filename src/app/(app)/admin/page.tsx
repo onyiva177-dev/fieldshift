@@ -73,11 +73,18 @@ export default async function AdminPage() {
               <p>Area: {o.county}{o.sub_county ? `, ${o.sub_county}` : ""}</p>
               <p>Contact: {o.contact_email}, {o.contact_phone}</p>
               <p className="text-sm">Registered {new Date(o.created_at).toLocaleDateString("en-GB")}</p>
-              <form action={decide} className="mt-3 flex gap-2">
-                <input type="hidden" name="id" value={o.id} />
-                <SubmitButton name="decision" value="verified" pendingText="Verifying...">Verify officer</SubmitButton>
-                <SubmitButton name="decision" value="rejected" className="btn-secondary" pendingText="Rejecting...">Reject</SubmitButton>
-              </form>
+              <div className="mt-3 flex gap-2">
+                <form action={decide}>
+                  <input type="hidden" name="id" value={o.id} />
+                  <input type="hidden" name="decision" value="verified" />
+                  <SubmitButton pendingText="Verifying...">Verify officer</SubmitButton>
+                </form>
+                <form action={decide}>
+                  <input type="hidden" name="id" value={o.id} />
+                  <input type="hidden" name="decision" value="rejected" />
+                  <SubmitButton className="btn-secondary" pendingText="Rejecting...">Reject</SubmitButton>
+                </form>
+              </div>
             </li>
           ))}
         </ul>

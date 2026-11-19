@@ -234,7 +234,7 @@ export default function FarmForm({ action, submitLabel, initial }: Props) {
         {area !== null && (
           <p>
             Boundary area: <strong>{area.toFixed(2)} ha</strong>.{" "}
-            <button type="button" onClick={() => setSize(area.toFixed(2))} className="font-semibold text-field-800 underline">
+            <button type="button" onClick={() => setSize(area.toFixed(2))} className="btn-secondary mt-2 min-h-11 px-3 py-1 text-sm">
               Use this as the farm size
             </button>
           </p>

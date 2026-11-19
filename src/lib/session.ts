@@ -16,10 +16,16 @@ export const getSessionUser = cache(async (): Promise<SessionUser | null> => {
     supabase.from("profiles").select("full_name").eq("id", claims.sub).maybeSingle(),
   ]);
 
+  // Never guess a role. If the lookup fails, say so rather than silently treating an administrator as a farmer.
+  if (roleRes.error) {
+    console.error("[session] could not load the user's role:", roleRes.error.code, roleRes.error.message);
+    throw new Error("Could not load your account. Please try again.");
+  }
+
   return {
     id: claims.sub,
     email: typeof claims.email === "string" ? claims.email : "",
     name: profileRes.data?.full_name ?? (typeof claims.email === "string" ? claims.email : ""),
-    role: (roleRes.data?.role as Role) ?? "farmer",
+    role: (roleRes.data?.role as Role | undefined) ?? "farmer", // a signed-in user with no role row is treated as a farmer
   };
 });
