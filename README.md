@@ -28,7 +28,15 @@ confidence level shown. An optional AI service only rewrites the engine's result
 rejected if it contains numbers the engine did not produce. Run `supabase/migrations/0005_crops.sql`.
 The seeded crop values are DRAFT indicative ranges: have an agronomist review them under Administration, Crops.
 
-Not built yet: multi-season planner, full dashboards.
+Phase 6 (planner and dashboards): a multi-season rotation planner that compares five strategies and explains each season;
+farmer, officer and administrator dashboards (alerts, farm map, environment and soil summaries, field visits, platform
+statistics); in-app notifications; user role management. Run `supabase/migrations/0006_planner_dashboards.sql`.
+
+Phase 7 (testing and hardening): unit tests, database security tests, a production smoke test, CI, friendly error pages,
+health check, security headers with an enforced Content-Security-Policy.
+
+Known limits: NASA and AppEEARS calls, real file uploads, AI explanations and email confirmation have not been run against
+the live services by the author (see Testing). Crop requirement values are drafts until an agronomist reviews them.
 No NASA or soil data is shown anywhere until those phases are connected to real sources.
 
 ## Setup
@@ -36,7 +44,7 @@ No NASA or soil data is shown anywhere until those phases are connected to real 
 1. Install Node 20.12 or newer, then run `npm install`.
 2. Create a Supabase project. In Project Settings > API, copy the Project URL and the anon public key.
 3. Copy `.env.example` to `.env.local` and set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-4. In the Supabase SQL Editor, run `0001_foundation.sql`, `0002_farms.sql`, `0003_soil.sql`, then `0004_nasa.sql`, then `0005_crops.sql` (in `supabase/migrations/`).
+4. In the Supabase SQL Editor, run `0001_foundation.sql`, `0002_farms.sql`, `0003_soil.sql`, then `0004_nasa.sql`, then `0005_crops.sql`, then `0006_planner_dashboards.sql` (in `supabase/migrations/`).
 5. In Authentication > URL Configuration, set Site URL to `http://localhost:3000` and add
    `http://localhost:3000/auth/callback` to Redirect URLs. Add your Vercel URL the same way after deploying.
 6. For quick local testing you may turn off Authentication > Providers > Email > Confirm email.
@@ -82,3 +90,36 @@ No NASA or soil data is shown anywhere until those phases are connected to real 
 - The first fetch for a new farm starts in the background when the farm is saved. Pages only read cached values.
 - Administrators can see configuration status and recent sync runs under Data sync.
 - Satellite and model values are never mixed with officer-verified soil tests.
+
+## Testing
+
+| Command | What it does |
+|---|---|
+| `npm run typecheck` | TypeScript check |
+| `npm test` | 89 unit tests: recommendation engine, planner, alerts, AI number guard, NASA parsers, climate maths |
+| `npm run test:db` | Builds a scratch PostgreSQL from the migrations and replays security scenarios (needs local PostgreSQL with PostGIS) |
+| `npm run smoke -- https://YOUR-APP.vercel.app` | Checks a deployed site: pages, login redirects, security headers, health, cron protection |
+
+Unit-test inputs are hand-made fixtures. They are never used by the app.
+
+## Production checklist
+
+1. Run migrations `0001` to `0006` in order in the Supabase SQL Editor.
+2. Vercel environment variables: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`,
+   `CRON_SECRET`, optionally `EARTHDATA_USERNAME`, `EARTHDATA_PASSWORD`, `AI_API_KEY` (see `.env.example`).
+3. Supabase, Authentication: set Site URL and Redirect URLs (`/auth/callback`) to your Vercel URL. Turn **Confirm email** on.
+   Consider enabling CAPTCHA protection and reviewing the rate limits there: login and sign-up throttling is provided by Supabase Auth.
+4. Vercel, Project Settings, Functions: choose the region closest to your Supabase region.
+5. Create the first administrator with `supabase/promote_admin.sql`.
+6. Run `npm run smoke -- https://YOUR-APP.vercel.app` and fix anything that fails.
+7. Open the live site on a phone, register a farm, and check the browser console for "Content Security Policy" messages.
+   If a policy problem ever appears, set `CSP_MODE=report-only` in Vercel while you fix it.
+8. Have an agronomist review every crop under Administration, Crops, and mark each Reviewed.
+9. Keep `SUPABASE_SERVICE_ROLE_KEY` secret. It is used only on the server.
+
+## Design notes worth knowing
+
+- Server actions that need to show a message after saving should return the message to a client form, or redirect to a
+  different page. A group-wide `loading.tsx` made redirects back to the same URL render a blank page, so `loading.tsx` is
+  used only on the dashboard.
+- Submit buttons must not rely on a `name` or `value`: React does not send them with server-action forms. Use hidden inputs.
